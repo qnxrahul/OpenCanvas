@@ -206,6 +206,13 @@ app.get('/v1/threads', async (req: Request, res: Response) => {
   }
 });
 
+app.get('/v1/threads/:id/messages', async (req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query('SELECT role, content, created_at FROM messages WHERE thread_id=$1 ORDER BY created_at ASC', [req.params.id]);
+    res.json({ items: rows });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
 // Chat within a thread (stores messages)
 const ThreadChatSchema = z.object({ threadId: z.string(), model: z.string().default('openai/gpt-4o-mini'), messages: z.array(z.object({ role: z.enum(['system','user','assistant']), content: z.string() })) });
 app.post('/v1/threads/:id/chat', async (req: Request, res: Response) => {
@@ -344,6 +351,41 @@ app.post('/v1/search', async (req: Request, res: Response) => {
   } catch (e: any) {
     return res.status(500).json({ error: String(e) });
   }
+});
+
+// Journeys executor (sequential steps)
+const JourneySchema = z.object({
+  workspaceId: z.string(),
+  steps: z.array(z.object({
+    kind: z.enum(['search','summarize','write']),
+    input: z.any().optional()
+  }))
+});
+app.post('/v1/journeys/run', async (req: Request, res: Response) => {
+  const parse = JourneySchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+  const { workspaceId, steps } = parse.data;
+  const outputs: any[] = [];
+  try {
+    for (const s of steps) {
+      if (s.kind === 'search') {
+        const query = String((s.input as any)?.query || '');
+        const r = await (await fetch('http://localhost:' + (process.env.PORT || 3001) + '/v1/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaceId, query, k: 5 }) })).json();
+        outputs.push({ kind: 'search', result: r });
+      } else if (s.kind === 'summarize') {
+        const text = String((s.input as any)?.text || '');
+        const body = { model: 'openai/gpt-4o-mini', messages: [ { role: 'user', content: 'Summarize this:\n\n' + text } ] };
+        const r = await (await fetch((process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api') + '/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` }, body: JSON.stringify(body) })).json();
+        outputs.push({ kind: 'summarize', result: r });
+      } else if (s.kind === 'write') {
+        const prompt = String((s.input as any)?.prompt || 'Write a short draft.');
+        const body = { model: 'openai/gpt-4o-mini', messages: [ { role: 'user', content: prompt } ] };
+        const r = await (await fetch((process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api') + '/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` }, body: JSON.stringify(body) })).json();
+        outputs.push({ kind: 'write', result: r });
+      }
+    }
+    res.json({ outputs });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
 });
 
 app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }));
