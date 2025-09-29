@@ -9,6 +9,7 @@ const { initDb, pool } = require('./db');
 const { ensureBucket, s3 } = require('./storage');
 const { toSql } = require('pgvector');
 
+let DB_AVAILABLE = false;
 const app = express();
 app.use(cors());
 // basic request logging
@@ -32,6 +33,9 @@ const OpenRouterSchema = z.object({
 // Workspaces minimal CRUD
 app.post('/v1/workspaces', async (req: Request, res: Response) => {
   try {
+    if (!DB_AVAILABLE) {
+      return res.json({ id: 'local-default' });
+    }
     const { name } = req.body || {};
     const { rows } = await pool.query('INSERT INTO workspaces (name) VALUES ($1) RETURNING id', [name || 'Workspace']);
     res.json({ id: rows[0].id });
@@ -40,6 +44,9 @@ app.post('/v1/workspaces', async (req: Request, res: Response) => {
 
 app.get('/v1/workspaces', async (_req: Request, res: Response) => {
   try {
+    if (!DB_AVAILABLE) {
+      return res.json({ items: [ { id: 'local-default', name: 'Default' } ] });
+    }
     const { rows } = await pool.query('SELECT * FROM workspaces ORDER BY created_at DESC');
     res.json({ items: rows });
   } catch (e: any) { res.status(500).json({ error: String(e) }); }
@@ -416,10 +423,12 @@ app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }));
 const port = Number(process.env.PORT || 3001);
 initDb()
   .then(() => {
+    DB_AVAILABLE = true;
     console.log('DB ready');
   })
   .catch((e: unknown) => {
     const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : String(e);
+    DB_AVAILABLE = false;
     console.warn('DB unreachable, starting API without DB features:', msg);
   })
   .finally(() => {
