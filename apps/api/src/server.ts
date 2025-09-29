@@ -329,13 +329,14 @@ const IngestTextSchema = z.object({
   sourceId: z.string().optional(),
   text: z.string(),
   chunkSize: z.number().int().min(200).max(4000).default(1000),
-  overlap: z.number().int().min(0).max(400).default(100)
+  overlap: z.number().int().min(0).max(400).default(100),
+  metadata: z.record(z.any()).optional()
 });
 
 app.post('/v1/ingest/text', async (req: Request, res: Response) => {
   const parse = IngestTextSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
-  const { workspaceId, sourceId, text, chunkSize, overlap } = parse.data;
+  const { workspaceId, sourceId, text, chunkSize, overlap, metadata } = parse.data;
   try {
     const chunks: string[] = [];
     for (let i = 0; i < text.length; i += (chunkSize - overlap)) {
@@ -348,7 +349,7 @@ app.post('/v1/ingest/text', async (req: Request, res: Response) => {
       const { rows } = await pool.query(
         `INSERT INTO chunks (source_id, workspace_id, content, metadata, embedding)
          VALUES ($1, $2, $3, $4, ${vecSql}) RETURNING id`,
-        [sourceId || null, workspaceId, chunks[i], {}]
+        [sourceId || null, workspaceId, chunks[i], metadata || {}]
       );
       insertedIds.push(rows[0].id);
     }
