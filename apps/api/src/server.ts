@@ -379,7 +379,7 @@ app.post('/v1/search', async (req: Request, res: Response) => {
   }
 });
 
-// Journeys executor (sequential steps)
+// Journeys executor using LangGraph
 const JourneySchema = z.object({
   workspaceId: z.string(),
   steps: z.array(z.object({
@@ -391,26 +391,11 @@ app.post('/v1/journeys/run', async (req: Request, res: Response) => {
   const parse = JourneySchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
   const { workspaceId, steps } = parse.data;
-  const outputs: any[] = [];
   try {
-    for (const s of steps) {
-      if (s.kind === 'search') {
-        const query = String((s.input as any)?.query || '');
-        const r = await (await fetch('http://localhost:' + (process.env.PORT || 3001) + '/v1/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ workspaceId, query, k: 5 }) })).json();
-        outputs.push({ kind: 'search', result: r });
-      } else if (s.kind === 'summarize') {
-        const text = String((s.input as any)?.text || '');
-        const body = { model: 'openai/gpt-4o-mini', messages: [ { role: 'user', content: 'Summarize this:\n\n' + text } ] };
-        const r = await (await fetch((process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api') + '/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` }, body: JSON.stringify(body) })).json();
-        outputs.push({ kind: 'summarize', result: r });
-      } else if (s.kind === 'write') {
-        const prompt = String((s.input as any)?.prompt || 'Write a short draft.');
-        const body = { model: 'openai/gpt-4o-mini', messages: [ { role: 'user', content: prompt } ] };
-        const r = await (await fetch((process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api') + '/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}` }, body: JSON.stringify(body) })).json();
-        outputs.push({ kind: 'write', result: r });
-      }
-    }
-    res.json({ outputs });
+    const { buildJourneyGraph } = require('./agents/journeys');
+    const appGraph = buildJourneyGraph(steps);
+    const result = await appGraph.invoke({ workspaceId });
+    res.json({ state: result });
   } catch (e: any) { res.status(500).json({ error: String(e) }); }
 });
 
