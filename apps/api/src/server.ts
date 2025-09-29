@@ -3,6 +3,10 @@ import express from 'express';
 import cors from 'cors';
 import { z } from 'zod';
 import fetch from 'node-fetch';
+import multer from 'multer';
+import { initDb, pool } from './db';
+import { ensureBucket, s3 } from './storage';
+import { toSql } from 'pgvector';
 
 const app = express();
 app.use(cors());
@@ -81,10 +85,129 @@ app.post('/v1/chat/completions', async (req, res) => {
   }
 });
 
+const upload = multer({ storage: multer.memoryStorage() });
+
+app.post('/v1/files/upload', upload.single('file'), async (req, res) => {
+  try {
+    const workspaceId = String(req.query.workspaceId || '00000000-0000-0000-0000-000000000000');
+    const file = (req as any).file as Express.Multer.File | undefined;
+    if (!file) return res.status(400).json({ error: 'No file' });
+    const bucket = process.env.S3_BUCKET || 'ag-bucket';
+    await ensureBucket(bucket);
+    const objectName = `${workspaceId}/${Date.now()}_${file.originalname}`;
+    await s3.putObject(bucket, objectName, file.buffer, file.mimetype);
+    const { rows } = await pool.query(
+      'INSERT INTO sources (workspace_id, kind, filename, mime, meta) VALUES ($1,$2,$3,$4,$5) RETURNING id',
+      [workspaceId, 'file', file.originalname, file.mimetype, { objectName }]
+    );
+    return res.json({ id: rows[0].id, objectName });
+  } catch (e: any) {
+    return res.status(500).json({ error: String(e) });
+  }
+});
+
+// Models list proxy
+app.get('/v1/models', async (_req, res) => {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api';
+  if (!apiKey) return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY' });
+  try {
+    const resp = await fetch(`${baseUrl}/v1/models`, {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    const data = await resp.json();
+    return res.status(resp.ok ? 200 : 500).json(data);
+  } catch (e: any) {
+    return res.status(500).json({ error: String(e) });
+  }
+});
+
+// Embeddings helper
+async function embedTexts(texts: string[], model = 'openai/text-embedding-3-small'): Promise<number[][]> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api';
+  if (!apiKey) throw new Error('Missing OPENROUTER_API_KEY');
+  const resp = await fetch(`${baseUrl}/v1/embeddings`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({ model, input: texts })
+  });
+  if (!resp.ok) {
+    const msg = await resp.text();
+    throw new Error(`Embeddings error: ${msg}`);
+  }
+  const json: any = await resp.json();
+  return json.data.map((d: any) => d.embedding as number[]);
+}
+
+// Ingest raw text into chunks with embeddings
+const IngestTextSchema = z.object({
+  workspaceId: z.string(),
+  sourceId: z.string().optional(),
+  text: z.string(),
+  chunkSize: z.number().int().min(200).max(4000).default(1000),
+  overlap: z.number().int().min(0).max(400).default(100)
+});
+
+app.post('/v1/ingest/text', async (req, res) => {
+  const parse = IngestTextSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+  const { workspaceId, sourceId, text, chunkSize, overlap } = parse.data;
+  try {
+    const chunks: string[] = [];
+    for (let i = 0; i < text.length; i += (chunkSize - overlap)) {
+      chunks.push(text.slice(i, i + chunkSize));
+    }
+    const vectors = await embedTexts(chunks);
+    const insertedIds: string[] = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const vecSql = toSql(vectors[i]);
+      const { rows } = await pool.query(
+        `INSERT INTO chunks (source_id, workspace_id, content, metadata, embedding)
+         VALUES ($1, $2, $3, $4, ${vecSql}) RETURNING id`,
+        [sourceId || null, workspaceId, chunks[i], {}]
+      );
+      insertedIds.push(rows[0].id);
+    }
+    return res.json({ count: insertedIds.length, ids: insertedIds });
+  } catch (e: any) {
+    return res.status(500).json({ error: String(e) });
+  }
+});
+
+// Semantic search
+const SearchSchema = z.object({ workspaceId: z.string(), query: z.string(), k: z.number().int().min(1).max(50).default(5) });
+app.post('/v1/search', async (req, res) => {
+  const parse = SearchSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+  const { workspaceId, query, k } = parse.data;
+  try {
+    const [vec] = await embedTexts([query]);
+    const { rows } = await pool.query(
+      `SELECT id, content, metadata, (embedding <=> ${toSql(vec)}) AS distance
+       FROM chunks WHERE workspace_id = $1
+       ORDER BY embedding <=> ${toSql(vec)} ASC LIMIT $2`,
+      [workspaceId, k]
+    );
+    return res.json({ results: rows });
+  } catch (e: any) {
+    return res.status(500).json({ error: String(e) });
+  }
+});
+
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 const port = Number(process.env.PORT || 3001);
-app.listen(port, () => {
-  console.log(`API listening on :${port}`);
+initDb().then(() => {
+  console.log('DB ready');
+}).catch((e) => {
+  console.warn('DB init error (continuing without DB):', e?.message || e);
+}).finally(() => {
+  app.listen(port, () => {
+    console.log(`API listening on :${port}`);
+  });
 });
 
