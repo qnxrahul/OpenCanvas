@@ -19,6 +19,81 @@ const OpenRouterSchema = z.object({
   stream: z.boolean().optional()
 });
 
+// Canvases CRUD & templates
+app.post('/v1/canvases', async (req: Request, res: Response) => {
+  try {
+    const { workspaceId, title, data } = req.body || {};
+    const { rows } = await pool.query('INSERT INTO canvases (workspace_id, title, data) VALUES ($1,$2,$3) RETURNING id', [workspaceId, title || null, data || {}]);
+    res.json({ id: rows[0].id });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
+app.get('/v1/canvases', async (req: Request, res: Response) => {
+  try {
+    const workspaceId = String(req.query.workspaceId || '');
+    const { rows } = await pool.query('SELECT * FROM canvases WHERE workspace_id=$1 ORDER BY updated_at DESC', [workspaceId]);
+    res.json({ items: rows });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
+app.put('/v1/canvases/:id', async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const { title, data } = req.body || {};
+    await pool.query('UPDATE canvases SET title = COALESCE($1,title), data = COALESCE($2,data), updated_at = now() WHERE id=$3', [title, data, id]);
+    res.json({ ok: true });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
+app.post('/v1/templates', async (req: Request, res: Response) => {
+  try {
+    const { workspaceId, title, data } = req.body || {};
+    const { rows } = await pool.query('INSERT INTO templates (workspace_id, title, data) VALUES ($1,$2,$3) RETURNING id', [workspaceId, title || null, data || {}]);
+    res.json({ id: rows[0].id });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
+app.get('/v1/templates', async (req: Request, res: Response) => {
+  try {
+    const workspaceId = String(req.query.workspaceId || '');
+    const { rows } = await pool.query('SELECT * FROM templates WHERE workspace_id=$1 ORDER BY created_at DESC', [workspaceId]);
+    res.json({ items: rows });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
+// Sources list
+app.get('/v1/sources', async (req: Request, res: Response) => {
+  try {
+    const workspaceId = String(req.query.workspaceId || '');
+    const { rows } = await pool.query('SELECT * FROM sources WHERE workspace_id=$1 ORDER BY created_at DESC', [workspaceId]);
+    res.json({ items: rows });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
+// AI canvas generator: outline/mindmap from prompt
+const CanvasGenSchema = z.object({ workspaceId: z.string(), prompt: z.string(), model: z.string().default('openai/gpt-4o-mini') });
+app.post('/v1/canvas/generate', async (req: Request, res: Response) => {
+  const parse = CanvasGenSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+  const { prompt, model } = parse.data;
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  const baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api';
+  if (!apiKey) return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY' });
+  const sys = 'You are a canvas planner. Return a JSON with nodes and edges arrays to represent a mind map/outline for the user prompt. Node: {id,label,type}. Edge: {id,source,target}.';
+  try {
+    const resp = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages: [ { role: 'system', content: sys }, { role: 'user', content: prompt } ] })
+    });
+    const data: any = await resp.json();
+    const content = data?.choices?.[0]?.message?.content ?? '{}';
+    let json: any = {};
+    try { json = JSON.parse(content); } catch { json = { nodes: [], edges: [] }; }
+    res.status(resp.ok ? 200 : 500).json(json);
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
 app.post('/v1/chat/completions', async (req: Request, res: Response) => {
   const parse = OpenRouterSchema.safeParse(req.body);
   if (!parse.success) {

@@ -63,6 +63,13 @@ async function initDb() {
       created_at timestamptz NOT NULL DEFAULT now(),
       updated_at timestamptz NOT NULL DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS templates (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE,
+      title text,
+      data jsonb NOT NULL DEFAULT '{}',
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
     CREATE TABLE IF NOT EXISTS sources (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE,
