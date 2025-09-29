@@ -402,14 +402,17 @@ app.post('/v1/journeys/run', async (req: Request, res: Response) => {
 app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }));
 
 const port = Number(process.env.PORT || 3001);
-initDb().then(() => {
-  console.log('DB ready');
-}).catch((e: unknown) => {
-  const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : String(e);
-  console.warn('DB init error (continuing without DB):', msg);
-}).finally(() => {
-  app.listen(port, () => {
-    console.log(`API listening on :${port}`);
+initDb()
+  .then(() => {
+    console.log('DB ready');
+  })
+  .catch((e: unknown) => {
+    const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : String(e);
+    console.warn('DB unreachable, starting API without DB features:', msg);
+  })
+  .finally(() => {
+    app.listen(port, () => {
+      console.log(`API listening on :${port}`);
+    });
   });
-});
 

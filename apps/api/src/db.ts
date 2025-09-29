@@ -10,9 +10,11 @@ const pool = new Pool({
 });
 
 async function initDb() {
-  try {
-    registerVectorTypes(pool);
-  } catch {}
+  // First, verify DB connectivity; if unavailable, bubble up so caller can decide.
+  await pool.query('SELECT 1').catch((e: unknown) => { throw e; });
+
+  // Register pgvector types (best-effort) and ensure required extensions (best-effort)
+  await registerVectorTypes(pool).catch(() => {});
   await pool.query(`CREATE EXTENSION IF NOT EXISTS vector;`).catch(() => {});
   await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`).catch(() => {});
   await pool.query(`
