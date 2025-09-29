@@ -104,7 +104,7 @@ app.post('/v1/canvas/generate', async (req: Request, res: Response) => {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api';
   if (!apiKey) return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY' });
-  const sys = 'You are a canvas planner. Return a JSON with nodes and edges arrays to represent a mind map/outline for the user prompt. Node: {id,label,type}. Edge: {id,source,target}.';
+  const sys = 'You are a canvas planner. Return ONLY valid JSON (no code fences) with keys "nodes" and "edges". nodes: array of {id,label,type}. edges: array of {id,source,target}. No extra text.';
   try {
     const resp = await fetch(`${baseUrl}/v1/chat/completions`, {
       method: 'POST',
@@ -112,9 +112,21 @@ app.post('/v1/canvas/generate', async (req: Request, res: Response) => {
       body: JSON.stringify({ model, messages: [ { role: 'system', content: sys }, { role: 'user', content: prompt } ] })
     });
     const data: any = await resp.json();
-    const content = data?.choices?.[0]?.message?.content ?? '{}';
-    let json: any = {};
-    try { json = JSON.parse(content); } catch { json = { nodes: [], edges: [] }; }
+    let content = data?.choices?.[0]?.message?.content ?? '';
+    // Strip fences if present
+    content = content.replace(/^```json\s*|^```\s*|```\s*$/gmi, '').trim();
+    // Extract first JSON object if extra text
+    const match = content.match(/\{[\s\S]*\}/);
+    const jsonText = match ? match[0] : content;
+    let json: any;
+    try {
+      json = JSON.parse(jsonText);
+    } catch {
+      json = { nodes: [], edges: [] };
+    }
+    if (!json.nodes || !json.edges) {
+      json = { nodes: [], edges: [] };
+    }
     res.status(resp.ok ? 200 : 500).json(json);
   } catch (e: any) { res.status(500).json({ error: String(e) }); }
 });
