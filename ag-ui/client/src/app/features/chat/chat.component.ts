@@ -53,7 +53,7 @@ type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 })
 export class ChatComponent {
   private http = inject(HttpClient);
-  private ws = inject(WorkspaceService);
+  ws = inject(WorkspaceService);
   input = '';
   messages = signal<ChatMessage[]>([]);
   pending = signal(false);

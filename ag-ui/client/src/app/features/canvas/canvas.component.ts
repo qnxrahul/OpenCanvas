@@ -62,7 +62,7 @@ type Edge = { id: string; source: string; target: string };
 })
 export class CanvasComponent {
   private http = inject(HttpClient);
-  private ws = inject(WorkspaceService);
+  ws = inject(WorkspaceService);
 
   get workspaceId() { return this.ws.currentWorkspaceId(); }
   canvasId: string | null = null;
