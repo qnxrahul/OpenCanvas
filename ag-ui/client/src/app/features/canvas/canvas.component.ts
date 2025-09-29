@@ -2,6 +2,7 @@ import { Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { WorkspaceService } from '../../services/workspace.service';
 
 type Node = { id: string; label: string; type?: string; x?: number; y?: number };
 type Edge = { id: string; source: string; target: string };
@@ -12,6 +13,11 @@ type Edge = { id: string; source: string; target: string };
   imports: [CommonModule, FormsModule],
   template: `
     <div class="toolbar">
+      <label>Workspace:
+        <select [ngModel]="workspaceId" (ngModelChange)="ws.currentWorkspaceId.set($event)">
+          <option *ngFor="let w of ws.workspaces()" [value]="w.id">{{ w.name }}</option>
+        </select>
+      </label>
       <input [(ngModel)]="prompt" placeholder="Describe your canvas..." />
       <button (click)="generate()">AI Generate</button>
       <button (click)="save()" [disabled]="saving()">Save</button>
@@ -50,8 +56,9 @@ type Edge = { id: string; source: string; target: string };
 })
 export class CanvasComponent {
   private http = inject(HttpClient);
+  private ws = inject(WorkspaceService);
 
-  workspaceId = '00000000-0000-0000-0000-000000000000';
+  get workspaceId() { return this.ws.currentWorkspaceId(); }
   canvasId: string | null = null;
   title = 'Untitled';
 

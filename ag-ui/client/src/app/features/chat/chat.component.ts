@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { WorkspaceService } from '../../services/workspace.service';
 
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 
@@ -12,6 +13,11 @@ type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
   template: `
     <div class="chat">
       <div class="sidebar">
+        <label>Workspace:
+          <select [ngModel]="workspaceId" (ngModelChange)="ws.currentWorkspaceId.set($event)">
+            <option *ngFor="let w of ws.workspaces()" [value]="w.id">{{ w.name }}</option>
+          </select>
+        </label>
         <button (click)="newThread()">New Thread</button>
         <div *ngFor="let t of threads()" class="thread" (click)="selectThread(t.id)" [class.active]="t.id===threadId">{{ t.title || t.id }}</div>
       </div>
@@ -47,10 +53,11 @@ type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string };
 })
 export class ChatComponent {
   private http = inject(HttpClient);
+  private ws = inject(WorkspaceService);
   input = '';
   messages = signal<ChatMessage[]>([]);
   pending = signal(false);
-  workspaceId = '00000000-0000-0000-0000-000000000000';
+  get workspaceId() { return this.ws.currentWorkspaceId(); }
   threadId: string | null = null;
   threads = signal<any[]>([]);
   contextChips = signal<string[]>(['current canvas', 'top results']);

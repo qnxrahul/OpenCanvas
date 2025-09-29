@@ -11,6 +11,15 @@ const { toSql } = require('pgvector');
 
 const app = express();
 app.use(cors());
+// basic request logging
+app.use((req: Request, _res: Response, next: any) => {
+  const start = Date.now();
+  (_res as any).on('finish', () => {
+    const ms = Date.now() - start;
+    console.log(`${req.method} ${req.url} ${(_res as any).statusCode} ${ms}ms`);
+  });
+  next();
+});
 app.use(express.json({ limit: '2mb' }));
 
 const OpenRouterSchema = z.object({
@@ -20,6 +29,22 @@ const OpenRouterSchema = z.object({
 });
 
 // Canvases CRUD & templates
+// Workspaces minimal CRUD
+app.post('/v1/workspaces', async (req: Request, res: Response) => {
+  try {
+    const { name } = req.body || {};
+    const { rows } = await pool.query('INSERT INTO workspaces (name) VALUES ($1) RETURNING id', [name || 'Workspace']);
+    res.json({ id: rows[0].id });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
+app.get('/v1/workspaces', async (_req: Request, res: Response) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM workspaces ORDER BY created_at DESC');
+    res.json({ items: rows });
+  } catch (e: any) { res.status(500).json({ error: String(e) }); }
+});
+
 app.post('/v1/canvases', async (req: Request, res: Response) => {
   try {
     const { workspaceId, title, data } = req.body || {};
