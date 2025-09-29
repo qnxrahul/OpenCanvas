@@ -1,12 +1,13 @@
-import 'dotenv/config';
-import express from 'express';
-import cors from 'cors';
-import { z } from 'zod';
-import fetch from 'node-fetch';
-import multer from 'multer';
-import { initDb, pool } from './db';
-import { ensureBucket, s3 } from './storage';
-import { toSql } from 'pgvector';
+require('dotenv/config');
+import type { Request, Response } from 'express';
+const express = require('express');
+const cors = require('cors');
+const { z } = require('zod');
+const fetch = require('node-fetch');
+const multer = require('multer');
+const { initDb, pool } = require('./db');
+const { ensureBucket, s3 } = require('./storage');
+const { toSql } = require('pgvector');
 
 const app = express();
 app.use(cors());
@@ -18,7 +19,7 @@ const OpenRouterSchema = z.object({
   stream: z.boolean().optional()
 });
 
-app.post('/v1/chat/completions', async (req, res) => {
+app.post('/v1/chat/completions', async (req: Request, res: Response) => {
   const parse = OpenRouterSchema.safeParse(req.body);
   if (!parse.success) {
     return res.status(400).json({ error: parse.error.flatten() });
@@ -87,10 +88,10 @@ app.post('/v1/chat/completions', async (req, res) => {
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.post('/v1/files/upload', upload.single('file'), async (req, res) => {
+app.post('/v1/files/upload', upload.single('file'), async (req: Request, res: Response) => {
   try {
     const workspaceId = String(req.query.workspaceId || '00000000-0000-0000-0000-000000000000');
-    const file = (req as any).file as Express.Multer.File | undefined;
+    const file = (req as any).file as { originalname: string; buffer: Buffer; mimetype: string } | undefined;
     if (!file) return res.status(400).json({ error: 'No file' });
     const bucket = process.env.S3_BUCKET || 'ag-bucket';
     await ensureBucket(bucket);
@@ -106,8 +107,80 @@ app.post('/v1/files/upload', upload.single('file'), async (req, res) => {
   }
 });
 
+// Threads CRUD
+app.post('/v1/threads', async (req: Request, res: Response) => {
+  try {
+    const { workspaceId, canvasId, title } = req.body || {};
+    const { rows } = await pool.query(
+      'INSERT INTO threads (workspace_id, canvas_id, title) VALUES ($1,$2,$3) RETURNING id',
+      [workspaceId, canvasId || null, title || null]
+    );
+    res.json({ id: rows[0].id });
+  } catch (e: any) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+app.get('/v1/threads', async (req: Request, res: Response) => {
+  try {
+    const workspaceId = String(req.query.workspaceId || '');
+    const { rows } = await pool.query('SELECT * FROM threads WHERE workspace_id = $1 ORDER BY created_at DESC', [workspaceId]);
+    res.json({ items: rows });
+  } catch (e: any) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// Chat within a thread (stores messages)
+const ThreadChatSchema = z.object({ threadId: z.string(), model: z.string().default('openai/gpt-4o-mini'), messages: z.array(z.object({ role: z.enum(['system','user','assistant']), content: z.string() })) });
+app.post('/v1/threads/:id/chat', async (req: Request, res: Response) => {
+  const parse = ThreadChatSchema.safeParse({ ...req.body, threadId: req.params.id });
+  if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+  const { threadId, model, messages } = parse.data;
+  try {
+    // persist messages
+    for (const m of messages) {
+      await pool.query('INSERT INTO messages (thread_id, role, content) VALUES ($1,$2,$3)', [threadId, m.role, m.content]);
+    }
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    const baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api';
+    if (!apiKey) return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY' });
+    const resp = await fetch(`${baseUrl}/v1/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ model, messages })
+    });
+    const data: any = await resp.json();
+    const content = data?.choices?.[0]?.message?.content ?? '';
+    if (content) await pool.query('INSERT INTO messages (thread_id, role, content) VALUES ($1,$2,$3)', [threadId, 'assistant', content]);
+    res.status(resp.ok ? 200 : 500).json(data);
+  } catch (e: any) {
+    res.status(500).json({ error: String(e) });
+  }
+});
+
+// URL ingestion: fetch text and queue embedding
+const UrlIngestSchema = z.object({ workspaceId: z.string(), url: z.string().url() });
+app.post('/v1/ingest/url', async (req: Request, res: Response) => {
+  const parse = UrlIngestSchema.safeParse(req.body);
+  if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
+  const { workspaceId, url } = parse.data;
+  try {
+    const r = await fetch(url);
+    const text = await r.text();
+    const { rows } = await pool.query('INSERT INTO sources (workspace_id, kind, url, meta) VALUES ($1,$2,$3,$4) RETURNING id', [workspaceId, 'url', url, {}]);
+    // naive immediate ingest; in prod, push to queue
+    req.body = { workspaceId, sourceId: rows[0].id, text };
+    // reuse text ingestion
+    // @ts-ignore
+    return (app._router.handle as any)({ ...req, url: '/v1/ingest/text', method: 'POST' }, res, () => {});
+  } catch (e: any) {
+    return res.status(500).json({ error: String(e) });
+  }
+});
+
 // Models list proxy
-app.get('/v1/models', async (_req, res) => {
+app.get('/v1/models', async (_req: Request, res: Response) => {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api';
   if (!apiKey) return res.status(500).json({ error: 'Missing OPENROUTER_API_KEY' });
@@ -152,7 +225,7 @@ const IngestTextSchema = z.object({
   overlap: z.number().int().min(0).max(400).default(100)
 });
 
-app.post('/v1/ingest/text', async (req, res) => {
+app.post('/v1/ingest/text', async (req: Request, res: Response) => {
   const parse = IngestTextSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
   const { workspaceId, sourceId, text, chunkSize, overlap } = parse.data;
@@ -180,7 +253,7 @@ app.post('/v1/ingest/text', async (req, res) => {
 
 // Semantic search
 const SearchSchema = z.object({ workspaceId: z.string(), query: z.string(), k: z.number().int().min(1).max(50).default(5) });
-app.post('/v1/search', async (req, res) => {
+app.post('/v1/search', async (req: Request, res: Response) => {
   const parse = SearchSchema.safeParse(req.body);
   if (!parse.success) return res.status(400).json({ error: parse.error.flatten() });
   const { workspaceId, query, k } = parse.data;
@@ -198,13 +271,14 @@ app.post('/v1/search', async (req, res) => {
   }
 });
 
-app.get('/health', (_req, res) => res.json({ ok: true }));
+app.get('/health', (_req: Request, res: Response) => res.json({ ok: true }));
 
 const port = Number(process.env.PORT || 3001);
 initDb().then(() => {
   console.log('DB ready');
-}).catch((e) => {
-  console.warn('DB init error (continuing without DB):', e?.message || e);
+}).catch((e: unknown) => {
+  const msg = typeof e === 'object' && e && 'message' in e ? (e as any).message : String(e);
+  console.warn('DB init error (continuing without DB):', msg);
 }).finally(() => {
   app.listen(port, () => {
     console.log(`API listening on :${port}`);

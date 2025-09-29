@@ -1,7 +1,7 @@
-import { Pool } from 'pg';
-import { registerTypes as registerVectorTypes } from 'pgvector/pg';
+const { Pool } = require('pg');
+const { registerTypes: registerVectorTypes } = require('pgvector/pg');
 
-export const pool = new Pool({
+const pool = new Pool({
   host: process.env.PGHOST,
   port: Number(process.env.PGPORT || 5432),
   database: process.env.PGDATABASE,
@@ -9,11 +9,12 @@ export const pool = new Pool({
   password: process.env.PGPASSWORD
 });
 
-export async function initDb() {
+async function initDb() {
   try {
     registerVectorTypes(pool);
   } catch {}
   await pool.query(`CREATE EXTENSION IF NOT EXISTS vector;`).catch(() => {});
+  await pool.query(`CREATE EXTENSION IF NOT EXISTS pgcrypto;`).catch(() => {});
   await pool.query(`
     CREATE TABLE IF NOT EXISTS workspaces (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -47,6 +48,13 @@ export async function initDb() {
       title text,
       created_at timestamptz NOT NULL DEFAULT now()
     );
+    CREATE TABLE IF NOT EXISTS messages (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      thread_id uuid REFERENCES threads(id) ON DELETE CASCADE,
+      role text NOT NULL,
+      content text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    );
     CREATE TABLE IF NOT EXISTS docs (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
       workspace_id uuid REFERENCES workspaces(id) ON DELETE CASCADE,
@@ -76,4 +84,6 @@ export async function initDb() {
     CREATE INDEX IF NOT EXISTS chunks_embedding_idx ON chunks USING ivfflat (embedding vector_cosine_ops);
   `);
 }
+
+module.exports = { pool, initDb };
 
