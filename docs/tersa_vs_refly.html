@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tersa.ai vs Refly-like App – Detailed Comparison</title>
+  <style>
+    :root { --fg:#0f172a; --muted:#475569; --border:#e2e8f0; --bg:#ffffff; --accent:#2563eb; }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--fg); font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial; }
+    .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    h2 { font-size: 18px; margin: 24px 0 8px; }
+    p { margin: 8px 0; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; }
+    .pro { color: #065f46; }
+    .con { color: #7c2d12; }
+    .note { font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tersa.ai vs Refly-like App – Detailed Comparison</h1>
+    <p>This report compares Tersa.ai (visual AI workflow builder with broad model integrations) and our Refly-like app (agentic research-to-content workspace with RAG, citations, editor, and journeys).</p>
+
+    <h2>Positioning</h2>
+    <table>
+      <tr>
+        <th>Aspect</th>
+        <th>Tersa.ai</th>
+        <th>Refly-like App</th>
+      </tr>
+      <tr>
+        <td>Primary Focus</td>
+        <td>Visual node-based workflows across many AI models (text/image/video/speech)</td>
+        <td>Research → knowledge → writing pipeline with citations, editor, journeys</td>
+      </tr>
+      <tr>
+        <td>Customization</td>
+        <td>High, via graph composition and many providers</td>
+        <td>High, via LangGraph journeys and modular services; opinionated UX</td>
+      </tr>
+      <tr>
+        <td>Learning Curve</td>
+        <td>Moderate–high for complex graphs</td>
+        <td>Low–moderate for content teams</td>
+      </tr>
+    </table>
+
+    <h2>Capabilities</h2>
+    <table>
+      <tr>
+        <th>Area</th>
+        <th>Tersa.ai</th>
+        <th>Refly-like App</th>
+      </tr>
+      <tr>
+        <td>Models/Providers</td>
+        <td>Broad coverage (hundreds of models/providers)</td>
+        <td>OpenRouter-backed; extensible, fewer prewired providers today</td>
+      </tr>
+      <tr>
+        <td>Canvas</td>
+        <td>Drag/drop nodes, connect and run workflows</td>
+        <td>Mind map/outline generator, nodes+edges, knowledge panel, save/templates</td>
+      </tr>
+      <tr>
+        <td>Multimedia</td>
+        <td>Text, images, video, speech pipelines</td>
+        <td>Text-first; multimedia planned</td>
+      </tr>
+      <tr>
+        <td>Knowledge & Search</td>
+        <td>Depends on node set-up; flexible</td>
+        <td>File/URL ingest, embeddings, semantic search, citations</td>
+      </tr>
+      <tr>
+        <td>Editor</td>
+        <td>External or node-based generation</td>
+        <td>Built-in AI assists, citations, MD/HTML export (blocks planned)</td>
+      </tr>
+      <tr>
+        <td>Orchestration</td>
+        <td>Graph execution within the canvas</td>
+        <td>LangGraph journeys (research/summarize/write)</td>
+      </tr>
+      <tr>
+        <td>Workspaces/Auth</td>
+        <td>Varies by deployment</td>
+        <td>Workspaces with planned RBAC</td>
+      </tr>
+      <tr>
+        <td>Observability</td>
+        <td>Varies</td>
+        <td>Logging; LangSmith integration planned</td>
+      </tr>
+    </table>
+
+    <h2>Pros & Cons</h2>
+    <table>
+      <tr>
+        <th></th>
+        <th>Pros</th>
+        <th>Cons</th>
+      </tr>
+      <tr>
+        <td>Tersa.ai</td>
+        <td class="pro">Broad model support; visual builder; multimedia pipelines</td>
+        <td class="con">Graph complexity; resource heavy for large flows; content UX not specialized</td>
+      </tr>
+      <tr>
+        <td>Refly-like App</td>
+        <td class="pro">Content-centric canvas, RAG + citations, editor, threads, journeys</td>
+        <td class="con">Fewer provider integrations; multimedia pending; advanced editor/collab pending</td>
+      </tr>
+    </table>
+
+    <h2>Recommendations</h2>
+    <ul>
+      <li>Use <strong>Tersa.ai</strong> for general AI workflow IDE needs, especially multimedia and diverse model combos.</li>
+      <li>Use the <strong>Refly-like app</strong> for research-to-document pipelines with knowledge retrieval and citations.</li>
+      <li>Hybrid: expose Tersa nodes as steps in LangGraph journeys to combine breadth with content UX.</li>
+    </ul>
+
+    <p class="note">Note: Details are based on publicly available information and our current implementation status; confirm specific enterprise requirements during evaluation.</p>
+  </div>
+</body>
+</html>

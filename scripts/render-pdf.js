@@ -3,8 +3,10 @@ const path = require('path');
 const puppeteer = require('puppeteer');
 
 async function main() {
-  const htmlPath = path.resolve(__dirname, '..', 'docs', 'refly_report.html');
-  const outPath = path.resolve(__dirname, '..', 'docs', 'refly_report.pdf');
+  const inArg = process.argv[2];
+  const outArg = process.argv[3];
+  const htmlPath = inArg ? path.resolve(inArg) : path.resolve(__dirname, '..', 'docs', 'refly_report.html');
+  const outPath = outArg ? path.resolve(outArg) : path.resolve(__dirname, '..', 'docs', 'refly_report.pdf');
   const html = fs.readFileSync(htmlPath, 'utf8');
   const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox','--disable-setuid-sandbox'] });
   const page = await browser.newPage();
