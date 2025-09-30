@@ -116,6 +116,104 @@
       </tr>
     </table>
 
+    <h2>Use Cases</h2>
+    <table>
+      <tr>
+        <th>Category</th>
+        <th>Tersa.ai</th>
+        <th>Refly-like App</th>
+      </tr>
+      <tr>
+        <td>Research & Writing</td>
+        <td>Assemble research pipelines with search/summarize nodes; export to external editors</td>
+        <td>Ingest sources, semantic search, citations, AI drafting within built-in editor</td>
+      </tr>
+      <tr>
+        <td>Technical Docs</td>
+        <td>Use code analysis and generation nodes; integrate LLMs for explanations</td>
+        <td>Knowledge-backed drafting, code/diagram generation (Mermaid planned), exports</td>
+      </tr>
+      <tr>
+        <td>Data/ML Pipelines</td>
+        <td>Chain models (embedding, re-rankers), image/video/speech nodes in one graph</td>
+        <td>Focus on RAG and journeys (search→summarize→write); ext. ML orchestration via LangGraph</td>
+      </tr>
+      <tr>
+        <td>Marketing Content</td>
+        <td>Create multimedia campaigns; generate assets (text, images, video)</td>
+        <td>Audience research via knowledge, structured briefs, AI writing, citations</td>
+      </tr>
+      <tr>
+        <td>Legal/Compliance</td>
+        <td>Compose checklists/flows; plug in OCR/transcription for evidence handling</td>
+        <td>Clause extraction (via journeys), tracked citations, structured document templates</td>
+      </tr>
+      <tr>
+        <td>Customer Support</td>
+        <td>Speech-to-text, summarization, response generation pipelines</td>
+        <td>KB-backed responses, summaries, and artifacted reports</td>
+      </tr>
+      <tr>
+        <td>Education & Training</td>
+        <td>Assemble lesson generators with multimedia outputs</td>
+        <td>Syllabus outlines, knowledge-backed lessons, handouts with citations</td>
+      </tr>
+      <tr>
+        <td>Product/Engineering</td>
+        <td>Code transformation, doc generation, design-to-asset pipelines</td>
+        <td>RFCs/PRDs with knowledge context, diagrams, review workflows</td>
+      </tr>
+    </table>
+
+    <h2>Technology Comparison</h2>
+    <table>
+      <tr>
+        <th>Layer</th>
+        <th>Tersa.ai</th>
+        <th>Refly-like App</th>
+      </tr>
+      <tr>
+        <td>Frontend</td>
+        <td>Visual node/graph builder UI</td>
+        <td>Angular app: Chat, Canvas, Editor; SVG edges; workspace selector</td>
+      </tr>
+      <tr>
+        <td>Orchestration</td>
+        <td>Graph execution within platform</td>
+        <td>LangGraph journeys for multi-step flows</td>
+      </tr>
+      <tr>
+        <td>LLM Access</td>
+        <td>Many providers/models integrated</td>
+        <td>OpenRouter (chat + embeddings); extensible adapters</td>
+      </tr>
+      <tr>
+        <td>Storage</td>
+        <td>Varies by deployment</td>
+        <td>Postgres + pgvector (semantic), MinIO (files)</td>
+      </tr>
+      <tr>
+        <td>Search/RAG</td>
+        <td>Configurable via nodes</td>
+        <td>Ingest (files/URLs), embeddings, semantic search, citations</td>
+      </tr>
+      <tr>
+        <td>Observability</td>
+        <td>Platform-specific</td>
+        <td>Server logs; planned LangSmith tracing</td>
+      </tr>
+      <tr>
+        <td>Collaboration</td>
+        <td>Platform-specific</td>
+        <td>Planned Yjs CRDT for real-time canvas/editor</td>
+      </tr>
+      <tr>
+        <td>Deployment</td>
+        <td>Open-source; depends on repo</td>
+        <td>Docker Compose, K8s (planned), env hardening</td>
+      </tr>
+    </table>
+
     <h2>Recommendations</h2>
     <ul>
       <li>Use <strong>Tersa.ai</strong> for general AI workflow IDE needs, especially multimedia and diverse model combos.</li>
