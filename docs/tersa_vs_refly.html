@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tersa.ai vs Refly-like App – Detailed Comparison</title>
+  <style>
+    :root { --fg:#0f172a; --muted:#475569; --border:#e2e8f0; --bg:#ffffff; --accent:#2563eb; }
+    html, body { margin:0; padding:0; background:var(--bg); color:var(--fg); font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial; }
+    .container { max-width: 960px; margin: 24px auto; padding: 0 16px; }
+    h1 { font-size: 24px; margin: 0 0 8px; }
+    h2 { font-size: 18px; margin: 24px 0 8px; }
+    p { margin: 8px 0; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+    th, td { border: 1px solid var(--border); padding: 8px 10px; text-align: left; vertical-align: top; }
+    th { background: #f8fafc; }
+    .pro { color: #065f46; }
+    .con { color: #7c2d12; }
+    .note { font-size: 12px; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Tersa.ai vs Refly-like App – Detailed Comparison</h1>
+    <p>This report compares Tersa.ai (visual AI workflow builder with broad model integrations) and our Refly-like app (agentic research-to-content workspace with RAG, citations, editor, and journeys).</p>
+
+    <h2>Positioning</h2>
+    <table>
+      <tr>
+        <th>Aspect</th>
+        <th>Tersa.ai</th>
+        <th>Refly-like App</th>
+      </tr>
+      <tr>
+        <td>Primary Focus</td>
+        <td>Visual node-based workflows across many AI models (text/image/video/speech)</td>
+        <td>Research → knowledge → writing pipeline with citations, editor, journeys</td>
+      </tr>
+      <tr>
+        <td>Customization</td>
+        <td>High, via graph composition and many providers</td>
+        <td>High, via LangGraph journeys and modular services; opinionated UX</td>
+      </tr>
+      <tr>
+        <td>Learning Curve</td>
+        <td>Moderate–high for complex graphs</td>
+        <td>Low–moderate for content teams</td>
+      </tr>
+    </table>
+
+    <h2>Capabilities</h2>
+    <table>
+      <tr>
+        <th>Area</th>
+        <th>Tersa.ai</th>
+        <th>Refly-like App</th>
+      </tr>
+      <tr>
+        <td>Models/Providers</td>
+        <td>Broad coverage (hundreds of models/providers)</td>
+        <td>OpenRouter-backed; extensible, fewer prewired providers today</td>
+      </tr>
+      <tr>
+        <td>Canvas</td>
+        <td>Drag/drop nodes, connect and run workflows</td>
+        <td>Mind map/outline generator, nodes+edges, knowledge panel, save/templates</td>
+      </tr>
+      <tr>
+        <td>Multimedia</td>
+        <td>Text, images, video, speech pipelines</td>
+        <td>Text-first; multimedia planned</td>
+      </tr>
+      <tr>
+        <td>Knowledge & Search</td>
+        <td>Depends on node set-up; flexible</td>
+        <td>File/URL ingest, embeddings, semantic search, citations</td>
+      </tr>
+      <tr>
+        <td>Editor</td>
+        <td>External or node-based generation</td>
+        <td>Built-in AI assists, citations, MD/HTML export (blocks planned)</td>
+      </tr>
+      <tr>
+        <td>Orchestration</td>
+        <td>Graph execution within the canvas</td>
+        <td>LangGraph journeys (research/summarize/write)</td>
+      </tr>
+      <tr>
+        <td>Workspaces/Auth</td>
+        <td>Varies by deployment</td>
+        <td>Workspaces with planned RBAC</td>
+      </tr>
+      <tr>
+        <td>Observability</td>
+        <td>Varies</td>
+        <td>Logging; LangSmith integration planned</td>
+      </tr>
+    </table>
+
+    <h2>Pros & Cons</h2>
+    <table>
+      <tr>
+        <th></th>
+        <th>Pros</th>
+        <th>Cons</th>
+      </tr>
+      <tr>
+        <td>Tersa.ai</td>
+        <td class="pro">Broad model support; visual builder; multimedia pipelines</td>
+        <td class="con">Graph complexity; resource heavy for large flows; content UX not specialized</td>
+      </tr>
+      <tr>
+        <td>Refly-like App</td>
+        <td class="pro">Content-centric canvas, RAG + citations, editor, threads, journeys</td>
+        <td class="con">Fewer provider integrations; multimedia pending; advanced editor/collab pending</td>
+      </tr>
+    </table>
+
+    <h2>Use Cases</h2>
+    <table>
+      <tr>
+        <th>Category</th>
+        <th>Tersa.ai</th>
+        <th>Refly-like App</th>
+      </tr>
+      <tr>
+        <td>Research & Writing</td>
+        <td>Assemble research pipelines with search/summarize nodes; export to external editors</td>
+        <td>Ingest sources, semantic search, citations, AI drafting within built-in editor</td>
+      </tr>
+      <tr>
+        <td>Technical Docs</td>
+        <td>Use code analysis and generation nodes; integrate LLMs for explanations</td>
+        <td>Knowledge-backed drafting, code/diagram generation (Mermaid planned), exports</td>
+      </tr>
+      <tr>
+        <td>Data/ML Pipelines</td>
+        <td>Chain models (embedding, re-rankers), image/video/speech nodes in one graph</td>
+        <td>Focus on RAG and journeys (search→summarize→write); ext. ML orchestration via LangGraph</td>
+      </tr>
+      <tr>
+        <td>Marketing Content</td>
+        <td>Create multimedia campaigns; generate assets (text, images, video)</td>
+        <td>Audience research via knowledge, structured briefs, AI writing, citations</td>
+      </tr>
+      <tr>
+        <td>Legal/Compliance</td>
+        <td>Compose checklists/flows; plug in OCR/transcription for evidence handling</td>
+        <td>Clause extraction (via journeys), tracked citations, structured document templates</td>
+      </tr>
+      <tr>
+        <td>Customer Support</td>
+        <td>Speech-to-text, summarization, response generation pipelines</td>
+        <td>KB-backed responses, summaries, and artifacted reports</td>
+      </tr>
+      <tr>
+        <td>Education & Training</td>
+        <td>Assemble lesson generators with multimedia outputs</td>
+        <td>Syllabus outlines, knowledge-backed lessons, handouts with citations</td>
+      </tr>
+      <tr>
+        <td>Product/Engineering</td>
+        <td>Code transformation, doc generation, design-to-asset pipelines</td>
+        <td>RFCs/PRDs with knowledge context, diagrams, review workflows</td>
+      </tr>
+    </table>
+
+    <h2>Technology Comparison</h2>
+    <table>
+      <tr>
+        <th>Layer</th>
+        <th>Tersa.ai</th>
+        <th>Refly-like App</th>
+      </tr>
+      <tr>
+        <td>Frontend</td>
+        <td>Visual node/graph builder UI</td>
+        <td>Angular app: Chat, Canvas, Editor; SVG edges; workspace selector</td>
+      </tr>
+      <tr>
+        <td>Orchestration</td>
+        <td>Graph execution within platform</td>
+        <td>LangGraph journeys for multi-step flows</td>
+      </tr>
+      <tr>
+        <td>LLM Access</td>
+        <td>Many providers/models integrated</td>
+        <td>OpenRouter (chat + embeddings); extensible adapters</td>
+      </tr>
+      <tr>
+        <td>Storage</td>
+        <td>Varies by deployment</td>
+        <td>Postgres + pgvector (semantic), MinIO (files)</td>
+      </tr>
+      <tr>
+        <td>Search/RAG</td>
+        <td>Configurable via nodes</td>
+        <td>Ingest (files/URLs), embeddings, semantic search, citations</td>
+      </tr>
+      <tr>
+        <td>Observability</td>
+        <td>Platform-specific</td>
+        <td>Server logs; planned LangSmith tracing</td>
+      </tr>
+      <tr>
+        <td>Collaboration</td>
+        <td>Platform-specific</td>
+        <td>Planned Yjs CRDT for real-time canvas/editor</td>
+      </tr>
+      <tr>
+        <td>Deployment</td>
+        <td>Open-source; depends on repo</td>
+        <td>Docker Compose, K8s (planned), env hardening</td>
+      </tr>
+    </table>
+
+    <h2>Enterprise Guidelines</h2>
+    <table>
+      <tr>
+        <th>Domain</th>
+        <th>Guidelines</th>
+      </tr>
+      <tr>
+        <td>Security & Compliance</td>
+        <td>
+          Enforce SSO/OIDC, MFA; ensure data encryption in transit/at rest; maintain audit trails; align to SOC 2/ISO 27001; implement DLP and secret scanning.
+        </td>
+      </tr>
+      <tr>
+        <td>Data Governance</td>
+        <td>
+          Classify data (PII/PHI/PCI); define retention and deletion; enforce data residency; support data subject requests (GDPR/CCPA).
+        </td>
+      </tr>
+      <tr>
+        <td>Model & Provider Controls</td>
+        <td>
+          Maintain allowlists; capture model/version in traces; validate eval results; support provider failover; track cost per request and per team.
+        </td>
+      </tr>
+      <tr>
+        <td>Prompt & Content Safety</td>
+        <td>
+          Use prompt templates with guardrails; enable toxicity/safety filters; implement redaction for sensitive fields; log prompts/outputs for QA with PII minimization.
+        </td>
+      </tr>
+      <tr>
+        <td>RBAC & Tenancy</td>
+        <td>
+          Enforce workspace isolation; role-based access (admin/editor/viewer); resource scoping for canvases, docs, datasets; periodic access reviews.
+        </td>
+      </tr>
+      <tr>
+        <td>Observability</td>
+        <td>
+          Trace all runs (inputs/outputs, tokens, latency); integrate with LangSmith or equivalent; export metrics to APM; define SLOs for latency and error rates.
+        </td>
+      </tr>
+      <tr>
+        <td>Deployment & SRE</td>
+        <td>
+          Use IaC; isolate services by blast radius; blue/green or canary deploys; autoscaling; rate limiting; WAF; regular security patching.
+        </td>
+      </tr>
+      <tr>
+        <td>Change Management</td>
+        <td>
+          Require PR reviews; maintain versioned prompts/flows; run regression tests (golden sets); keep a rollback plan; document runbooks.
+        </td>
+      </tr>
+      <tr>
+        <td>Resilience & DR</td>
+        <td>
+          Back up vector DB and metadata; multi-AZ where applicable; DR drills; provider failover plans; graceful degradation for noncritical features.
+        </td>
+      </tr>
+      <tr>
+        <td>Cost & FinOps</td>
+        <td>
+          Budgets/alerts per workspace; daily cost reports; cache/grounding to reduce tokens; batch background jobs; pick cost-optimized models per task.
+        </td>
+      </tr>
+      <tr>
+        <td>Testing & Evaluation</td>
+        <td>
+          Maintain eval suites (quality, safety); offline A/B for model changes; automatic drift detection; human-in-the-loop review for critical outputs.
+        </td>
+      </tr>
+    </table>
+
+    <h2>Recommendations</h2>
+    <ul>
+      <li>Use <strong>Tersa.ai</strong> for general AI workflow IDE needs, especially multimedia and diverse model combos.</li>
+      <li>Use the <strong>Refly-like app</strong> for research-to-document pipelines with knowledge retrieval and citations.</li>
+      <li>Hybrid: expose Tersa nodes as steps in LangGraph journeys to combine breadth with content UX.</li>
+    </ul>
+
+    <p class="note">Note: Details are based on publicly available information and our current implementation status; confirm specific enterprise requirements during evaluation.</p>
+  </div>
+</body>
+</html>

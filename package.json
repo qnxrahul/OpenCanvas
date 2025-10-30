@@ -1,0 +1,28 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/qnxrahul/OpenCanvas.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/qnxrahul/OpenCanvas/issues"
+  },
+  "homepage": "https://github.com/qnxrahul/OpenCanvas#readme",
+  "description": "",
+  "dependencies": {
+    "html-docx-js": "^0.3.1",
+    "jsdom": "^27.0.0",
+    "puppeteer": "^24.22.3"
+  }
+}
